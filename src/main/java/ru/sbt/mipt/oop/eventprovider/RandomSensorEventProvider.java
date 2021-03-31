@@ -9,8 +9,15 @@ public class RandomSensorEventProvider implements SensorEventProvider {
     public SensorEvent getNextSensorEvent() {
         // pretend like we're getting the events from physical world, but here we're going to just generate some random events
         if (Math.random() < 0.05) return null; // null means end of event stream
-        SensorEventType sensorEventType = SensorEventType.values()[(int) (4 * Math.random())];
-        String objectId = "" + ((int) (10 * Math.random()));
+        int typeNumber = (int) (6 * Math.random());
+        SensorEventType sensorEventType = SensorEventType.values()[typeNumber];
+        String objectId = "";
+        if (typeNumber < 4) {
+            objectId += ((int) (10 * Math.random()));
+        } else {
+            //alarm event
+            objectId += ((int) (10 * Math.random())) % 2;
+        }
         return new SensorEvent(sensorEventType, objectId);
     }
 }

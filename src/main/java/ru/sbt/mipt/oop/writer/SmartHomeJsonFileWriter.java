@@ -20,13 +20,15 @@ public class SmartHomeJsonFileWriter implements SmartHomeWriter {
     }
 
     @Override
-    public void writeSmartHome() throws IOException {
+    public void writeSmartHome() {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         String jsonString = gson.toJson(smartHome);
         System.out.println(jsonString);
         Path path = Paths.get(filename);
         try (BufferedWriter writer = Files.newBufferedWriter(path)) {
             writer.write(jsonString);
+        } catch (IOException e) {
+            throw new RuntimeException("Can not write smarthome to file:" + path, e);
         }
     }
 }
