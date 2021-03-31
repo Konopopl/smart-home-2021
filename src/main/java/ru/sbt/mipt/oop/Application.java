@@ -1,14 +1,12 @@
 package ru.sbt.mipt.oop;
 
+import java.util.Arrays;
+
 import ru.sbt.mipt.oop.commandsender.FakeCommandSender;
-import ru.sbt.mipt.oop.eventhandler.DoorEventHandler;
-import ru.sbt.mipt.oop.eventhandler.HallDoorEventHandler;
-import ru.sbt.mipt.oop.eventhandler.LightEventHandler;
+import ru.sbt.mipt.oop.eventhandler.*;
 import ru.sbt.mipt.oop.eventprovider.RandomSensorEventProvider;
 import ru.sbt.mipt.oop.loader.SmartHomeJsonFileLoader;
 import ru.sbt.mipt.oop.loader.SmartHomeLoader;
-
-import java.util.Arrays;
 
 public class Application {
     private final SmartHomeLoader smartHomeLoader;
@@ -22,13 +20,16 @@ public class Application {
 
     public static void main(String... args) {
         new Application(
-                new SmartHomeJsonFileLoader("smart-home-1.js"),
+                new SmartHomeJsonFileLoader("smart-home-1.json"),
                 new EventCycleRunner(
                         new RandomSensorEventProvider(),
                         Arrays.asList(
-                                new LightEventHandler(),
-                                new DoorEventHandler(),
-                                new HallDoorEventHandler(new FakeCommandSender())
+                                new SecurityEventHandlerDecorator(Arrays.asList(
+                                        new LightEventHandler(),
+                                        new DoorEventHandler(),
+                                        new HallDoorEventHandler(new FakeCommandSender())
+                                )),
+                                new AlarmEventHandler()
                         )
                 )
         ).run();

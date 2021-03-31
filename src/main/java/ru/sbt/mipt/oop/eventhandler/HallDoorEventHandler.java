@@ -23,40 +23,56 @@ public class HallDoorEventHandler implements EventHandler {
 
     @Override
     public void handleEvent(SmartHome smartHome, SensorEvent event) {
-        if (isDoorEvent(event) && isHallDoorEvent(smartHome, event)) {
-            if (event.getType() == DOOR_CLOSED) {
-                handleClosedEvent(smartHome);
-            }
+        if (isDoorEvent(event)) {
+            smartHome.execute(roomCandidate -> {
+                if (!(roomCandidate instanceof Room)) {
+                    return;
+                }
+
+                Room room = (Room) roomCandidate;
+
+                if (!room.getName().equals("hall")) {
+                    return;
+                }
+
+                room.execute(doorCandidate -> {
+                    if (!(doorCandidate instanceof Door)) {
+                        return;
+                    }
+                    Door door = (Door) doorCandidate;
+
+                    if (!door.getId().equals(event.getObjectId())) {
+                        return;
+                    }
+
+                    // this event is hall door event, so handle it
+                    if (event.getType() == DOOR_CLOSED) {
+                        handleClosedEvent(smartHome);
+                    }
+
+                });
+            });
         }
     }
 
     private void handleClosedEvent(SmartHome smartHome) {
-        for (Room room : smartHome.getRooms()) {
-            for (Light light : room.getLights()) {
-                light.turnOff();
-                logger.info("Light " + light.getId() + " in room " + room.getName() + " was turned off.");
-
-                SensorCommand command = new SensorCommand(CommandType.LIGHT_OFF, light.getId());
-                commandSender.sendCommand(command);
+        smartHome.execute(lightCandidate -> {
+            if (!(lightCandidate instanceof Light)) {
+                return;
             }
-        }
+
+            Light light = (Light) lightCandidate;
+
+            light.turnOff();
+            logger.info("Light " + light.getId() + " was turned off.");
+
+            SensorCommand command = new SensorCommand(CommandType.LIGHT_OFF, light.getId());
+            commandSender.sendCommand(command);
+        });
     }
 
     private boolean isDoorEvent(SensorEvent event) {
         return event.getType() == DOOR_CLOSED || event.getType() == DOOR_OPEN;
     }
 
-    private boolean isHallDoorEvent(SmartHome smartHome, SensorEvent event) {
-        for (Room room : smartHome.getRooms()) {
-            for (Door door : room.getDoors()) {
-                if (door.getId().equals(event.getObjectId())) {
-                    if (room.getName().equals("hall")) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
 }
